@@ -81,19 +81,8 @@ export default function WhatIfMachine() {
         <div className="book-wrapper">
           {/* Spiral binding - full height with actual coils */}
           <div className="spiral-binding" aria-hidden="true">
-            {holes.map((_, i) => (
-              <div key={i} className="spiral-ring">
-                <div className="ring-hole" />
-                <svg className="ring-coil" viewBox="0 0 24 20" fill="none">
-                  <path 
-                    d="M2 10C2 5 6 2 12 2C18 2 22 5 22 10C22 15 18 18 12 18" 
-                    stroke="#a89b8c" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
+          {holes.map((_, i) => (
+              <div key={i} className="ring-hole" />
             ))}
           </div>
 
