@@ -150,7 +150,7 @@ All colors MUST be HSL.
 /* Spiral binding - full height */
 .spiral-binding {
   position: absolute;
-  left: -16px;
+  left: -8px;
   top: 0;
   bottom: 0;
   width: 32px;
