@@ -82,7 +82,18 @@ export default function WhatIfMachine() {
           {/* Spiral binding - full height with actual coils */}
           <div className="spiral-binding" aria-hidden="true">
           {holes.map((_, i) => (
-              <div key={i} className="ring-hole" />
+              <div key={i} className="spiral-ring">
+                <svg className="ring-coil" viewBox="0 0 24 12" fill="none">
+                  <path 
+                    d="M4 12C4 6 8 2 12 2C16 2 20 6 20 12" 
+                    stroke="#a89b8c" 
+                    strokeWidth="1.8" 
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+                <div className="ring-hole" />
+              </div>
             ))}
           </div>
 

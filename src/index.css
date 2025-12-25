@@ -161,6 +161,24 @@ All colors MUST be HSL.
   z-index: 10;
 }
 
+.spiral-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+}
+
+.ring-coil {
+  position: absolute;
+  width: 24px;
+  height: 12px;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
 .ring-hole {
   width: 10px;
   height: 10px;
@@ -168,6 +186,7 @@ All colors MUST be HSL.
   border-radius: 50%;
   border: 1px solid hsl(30 10% 75%);
   box-shadow: inset 0 1px 2px hsl(30 10% 70%);
+  z-index: 2;
 }
 
 /* Page card with flip */
