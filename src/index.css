@@ -103,3 +103,281 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* What If Machine Styles */
+.whatif-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, hsl(30 20% 96%) 0%, hsl(30 15% 92%) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: 'Georgia', serif;
+}
+
+.whatif-container {
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+}
+
+.whatif-title {
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: hsl(30 10% 30%);
+  margin-bottom: 0.5rem;
+  font-family: 'Georgia', serif;
+}
+
+.title-emoji {
+  font-size: 1.5rem;
+}
+
+.whatif-subtitle {
+  color: hsl(30 10% 45%);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* Book wrapper with spiral */
+.book-wrapper {
+  position: relative;
+  display: flex;
+  margin-left: 20px;
+}
+
+/* Spiral binding - full height */
+.spiral-binding {
+  position: absolute;
+  left: -16px;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 0;
+  z-index: 10;
+}
+
+.spiral-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+}
+
+.ring-hole {
+  width: 10px;
+  height: 10px;
+  background: hsl(30 15% 88%);
+  border-radius: 50%;
+  border: 1px solid hsl(30 10% 75%);
+  box-shadow: inset 0 1px 2px hsl(30 10% 70%);
+  z-index: 2;
+}
+
+.ring-coil {
+  position: absolute;
+  width: 28px;
+  height: 18px;
+  left: -6px;
+  z-index: 1;
+}
+
+/* Page card with flip */
+.page-card {
+  flex: 1;
+  background: hsl(40 30% 97%);
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 
+    0 4px 20px hsl(30 20% 70% / 0.3),
+    0 1px 3px hsl(30 20% 60% / 0.2);
+  padding: 2rem 2.5rem;
+  min-height: 420px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
+}
+
+.page-card.flipped {
+  transform: rotateY(-180deg);
+}
+
+.page-face {
+  position: absolute;
+  inset: 0;
+  padding: 2rem 2.5rem;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-front {
+  z-index: 2;
+}
+
+.page-back {
+  transform: rotateY(180deg);
+  z-index: 1;
+  overflow-y: auto;
+}
+
+/* Form elements */
+.input-group {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.9rem;
+  color: hsl(30 10% 35%);
+  margin-bottom: 0.5rem;
+}
+
+.soft-label {
+  display: block;
+  font-size: 0.85rem;
+  color: hsl(30 10% 50%);
+  margin-bottom: 0.5rem;
+}
+
+.whatif-input,
+.whatif-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid hsl(30 15% 85%);
+  border-radius: 8px;
+  background: hsl(40 20% 98%);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: hsl(30 10% 25%);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.whatif-input:focus,
+.whatif-textarea:focus {
+  outline: none;
+  border-color: hsl(30 20% 70%);
+  box-shadow: 0 0 0 3px hsl(30 20% 85% / 0.5);
+}
+
+.whatif-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.soft-error {
+  color: hsl(0 60% 50%);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.whatif-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.whatif-btn.primary {
+  background: hsl(30 15% 25%);
+  color: hsl(40 30% 97%);
+}
+
+.whatif-btn.primary:hover:not(:disabled) {
+  background: hsl(30 15% 20%);
+}
+
+.whatif-btn.secondary {
+  background: hsl(30 10% 90%);
+  color: hsl(30 10% 35%);
+}
+
+.whatif-btn.secondary:hover:not(:disabled) {
+  background: hsl(30 10% 85%);
+}
+
+.whatif-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: hsl(30 10% 40%);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid hsl(30 10% 80%);
+  border-top-color: hsl(30 15% 40%);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Story content */
+.story-content {
+  text-align: left;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.story-content.fade-in {
+  opacity: 1;
+}
+
+.story-title {
+  font-size: 1.25rem;
+  color: hsl(30 10% 30%);
+  margin-bottom: 1rem;
+}
+
+.key-moments {
+  font-size: 1rem;
+  color: hsl(30 10% 35%);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.reflection {
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.empty-state {
+  color: hsl(30 10% 50%);
+  text-align: center;
+}
+
+/* Footer */
+.whatif-footer {
+  margin-top: 1.5rem;
+  color: hsl(30 10% 50%);
+  font-size: 0.9rem;
+}
