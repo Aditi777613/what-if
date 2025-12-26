@@ -69,7 +69,7 @@ export default function WhatIfMachine() {
   };
 
   // Generate spiral holes for the full height
-  const holes = Array.from({ length: 18 });
+  const holes = Array.from({ length: 12 });
 
   return (
     <div className="whatif-page">
