@@ -84,9 +84,9 @@ export default function WhatIfMachine() {
             {holes.map((_, i) => (
               <div key={i} className="spiral-ring">
                 <div className="ring-hole" />
-                <svg className="ring-coil" viewBox="0 0 24 20" fill="none">
+                <svg className="ring-coil" viewBox="0 0 20 16" fill="none">
                   <path 
-                    d="M2 10C2 5 6 2 12 2C18 2 22 5 22 10C22 15 18 18 12 18" 
+                    d="M18 8C18 4 14 1 10 1C6 1 2 4 2 8" 
                     stroke="#a89b8c" 
                     strokeWidth="1.5" 
                     strokeLinecap="round"
