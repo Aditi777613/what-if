@@ -11,7 +11,7 @@ const fetch = globalThis.fetch || nodeFetch;
 /* ✅ CORS — FIXED */
 app.use(cors({
   origin: [
-    "https://what-if-git-main-aditi-chourasias-projects.vercel.app",
+    "https://what-if-ecru.vercel.app/",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "OPTIONS"],
