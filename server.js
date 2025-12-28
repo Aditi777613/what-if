@@ -80,6 +80,7 @@ Title, Morning, Midday, Afternoon, Evening, Reflection.`;
   }
 });
 
+/* ✅ ROBUST STORY PARSER (THIS FIXES EMPTY OUTPUT) */
 function parseStory(text, whatIf) {
   const sections = {
     title: whatIf,
@@ -90,6 +91,7 @@ function parseStory(text, whatIf) {
     reflection: "",
   };
 
+  // Try markdown-style sections first
   const patterns = {
     morning: /\*\*Morning:\*\*([\s\S]*?)(?=\*\*Midday|\Z)/i,
     midday: /\*\*Midday:\*\*([\s\S]*?)(?=\*\*Afternoon|\Z)/i,
@@ -98,9 +100,37 @@ function parseStory(text, whatIf) {
     reflection: /\*\*Reflection:\*\*([\s\S]*)/i,
   };
 
+  let matched = false;
+
   for (const key in patterns) {
     const match = text.match(patterns[key]);
-    if (match) sections[key] = match[1].trim();
+    if (match) {
+      sections[key] = match[1].trim();
+      matched = true;
+    }
+  }
+
+  /* 🔥 FALLBACK — paragraph-based (MOST IMPORTANT FIX) */
+  if (!matched) {
+    const paragraphs = text
+      .split(/\n\n+/)
+      .map(p => p.trim())
+      .filter(p => p.length > 40);
+
+    if (paragraphs.length >= 5) {
+      const chunk = Math.ceil(paragraphs.length / 5);
+      sections.morning = paragraphs.slice(0, chunk).join("\n\n");
+      sections.midday = paragraphs.slice(chunk, chunk * 2).join("\n\n");
+      sections.afternoon = paragraphs.slice(chunk * 2, chunk * 3).join("\n\n");
+      sections.evening = paragraphs.slice(chunk * 3, chunk * 4).join("\n\n");
+      sections.reflection = paragraphs.slice(chunk * 4).join("\n\n");
+    } else {
+      sections.morning = paragraphs[0] || text;
+      sections.midday = paragraphs[1] || "";
+      sections.afternoon = paragraphs[2] || "";
+      sections.evening = paragraphs[3] || "";
+      sections.reflection = paragraphs[4] || "Every path leaves a trace.";
+    }
   }
 
   return sections;
