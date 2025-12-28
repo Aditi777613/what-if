@@ -36,16 +36,32 @@ Scenario: ${whatIf}
 Current situation: ${currentLife || "Not specified"}
 
 STRICT RULES:
-- Do NOT include markdown symbols
+- Total length MUST be at least 150 words
+- Each section MUST be at least 25–40 words
+- Do NOT summarize
+- Do NOT use markdown symbols
 - Do NOT repeat headings inside content
-- Output sections ONLY in this order:
+- Write in a calm, reflective narrative tone
+
+OUTPUT FORMAT (EXACT ORDER):
 
 Title:
+(3–6 word poetic title)
+
 Morning:
+(Describe waking up, surroundings, emotions, actions)
+
 Midday:
+(Describe work/study, interactions, environment)
+
 Afternoon:
+(Describe momentum of the day, challenges, thoughts)
+
 Evening:
+(Describe slowing down, atmosphere, feelings)
+
 Reflection:
+(Thoughtful reflection on this life path and its meaning)
 `;
 
     const response = await fetch(
@@ -59,8 +75,8 @@ Reflection:
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [{ role: "user", content: storyPrompt }],
-          temperature: 0.8,
-          max_tokens: 2000,
+          temperature: 0.85,
+          max_tokens: 2500,
         }),
       }
     );
@@ -86,7 +102,6 @@ Reflection:
 });
 
 function parseStory(text, whatIf) {
-  // Remove markdown + extra junk
   const clean = text
     .replace(/\*\*/g, "")
     .replace(/#+\s?/g, "")
