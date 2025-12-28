@@ -32,12 +32,12 @@ app.post("/api/generate", async (req, res) => {
     const storyPrompt = `
 Write a realistic, emotional day-in-the-life story.
 
-Scenario: ${whatIf}
+Scenario (DO NOT reuse as title): ${whatIf}
 Current situation: ${currentLife || "Not specified"}
 
 STRICT RULES:
-- Total length MUST be at least 150 words
-- Each section MUST be at least 25–40 words
+- Total length MUST be at least 600 words
+- Each section MUST be at least 150 words
 - Do NOT summarize
 - Do NOT use markdown symbols
 - Do NOT repeat headings inside content
@@ -46,7 +46,7 @@ STRICT RULES:
 OUTPUT FORMAT (EXACT ORDER):
 
 Title:
-(3–6 word poetic title)
+(3–6 word poetic, metaphorical title — NOT literal)
 
 Morning:
 (Describe waking up, surroundings, emotions, actions)
