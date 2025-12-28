@@ -9,7 +9,6 @@ export interface Story {
 
 export interface GenerateResponse {
   story: Story;
-  imageUrl: string | null;
 }
 
 export interface GenerateRequest {
@@ -17,36 +16,56 @@ export interface GenerateRequest {
   currentLife?: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5174';
+/**
+ * IMPORTANT:
+ * - No API_BASE_URL
+ * - No localhost
+ * - Relative path works on both:
+ *   - localhost (Vite proxy / same origin)
+ *   - Vercel (/api serverless functions)
+ */
+const API_ENDPOINT = "/api/generate";
 
 export const generateStory = async (
   request: GenerateRequest
 ): Promise<GenerateResponse> => {
-  console.log('🚀 Sending request to:', `${API_BASE_URL}/api/generate`);
-  console.log('📦 Request payload:', request);
-  
-  const response = await fetch(`${API_BASE_URL}/api/generate`, {
-    method: 'POST',
+  console.log("🚀 Sending request to:", API_ENDPOINT);
+  console.log("📦 Request payload:", request);
+
+  const response = await fetch(API_ENDPOINT, {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
   });
 
-  console.log('📡 Response status:', response.status);
-  
+  console.log("📡 Response status:", response.status);
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    console.error('❌ API Error:', error);
-    throw new Error(error.error || error.details || 'Failed to generate story');
+    let errorMessage = "Failed to generate story";
+
+    try {
+      const error = await response.json();
+      errorMessage =
+        error.error ||
+        error.details ||
+        error.message ||
+        errorMessage;
+      console.error("❌ API Error:", error);
+    } catch {
+      console.error("❌ API Error: Non-JSON response");
+    }
+
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
-  console.log('✅ Received data:', {
+
+  console.log("✅ Story received:", {
     hasStory: !!data.story,
-    hasImageUrl: !!data.imageUrl,
-    storyTitle: data.story?.title
+    storyTitle: data.story?.title,
   });
-  
+
   return data;
 };
