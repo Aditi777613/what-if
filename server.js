@@ -32,12 +32,15 @@ app.post("/api/generate", async (req, res) => {
     const storyPrompt = `
 Write a realistic, emotional day-in-the-life story.
 
-Scenario (DO NOT reuse as title): ${whatIf}
+Scenario: ${whatIf}
 Current situation: ${currentLife || "Not specified"}
 
 STRICT RULES:
 - Total length MUST be at least 600 words
 - Each section MUST be at least 150 words
+- The title MUST be metaphorical and original. 
+- The title MUST be poetic and original and MUST NOT include, paraphrase, or reference any word from the scenario text in any form.
+- The title MUST NOT repeat or closely resemble the scenario text
 - Do NOT summarize
 - Do NOT use markdown symbols
 - Do NOT repeat headings inside content
