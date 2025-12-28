@@ -187,7 +187,7 @@ All colors MUST be HSL.
   z-index: 1;
 }
 
-/* Page card with flip */
+/* Page card with 3D flip */
 .page-card {
   flex: 1;
   background: hsl(40 30% 97%);
@@ -195,36 +195,46 @@ All colors MUST be HSL.
   box-shadow: 
     0 4px 20px hsl(30 20% 70% / 0.3),
     0 1px 3px hsl(30 20% 60% / 0.2);
-  padding: 2rem 2.5rem;
   min-height: 420px;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: left center;
-}
-
-.page-card.flipped {
-  transform: rotateY(-180deg);
+  perspective: 1500px;
 }
 
 .page-face {
   position: absolute;
   inset: 0;
   padding: 2rem 2.5rem;
-  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  backface-visibility: hidden;
+  background: hsl(40 30% 97%);
+  border-radius: 4px 12px 12px 4px;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
 }
 
 .page-front {
   z-index: 2;
+  transform: rotateY(0deg);
+}
+
+.page-card.flipped .page-front {
+  transform: rotateY(-180deg);
+  pointer-events: none;
 }
 
 .page-back {
-  transform: rotateY(180deg);
   z-index: 1;
   overflow-y: auto;
+  transform: rotateY(180deg);
+}
+
+.page-card.flipped .page-back {
+  transform: rotateY(0deg);
+  z-index: 3;
 }
 
 /* Form elements */
@@ -317,6 +327,12 @@ All colors MUST be HSL.
 .whatif-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.back-btn {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
 }
 
 /* Loading state */

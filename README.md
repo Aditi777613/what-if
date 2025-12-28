@@ -1,8 +1,38 @@
-# Welcome to your Lovable project
+# What If Machine
 
-## Project info
+Explore alternate life paths through AI-generated narratives. "What if I'd studied art instead?" See a day-in-the-life story, complete with fictional but plausible details.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Setup Instructions
+
+### 1. Environment Variables
+
+Create a `.env` file in the root directory with:
+
+```env
+# Optional: Hugging Face API Token (recommended for better rate limits)
+# Get free token at: https://huggingface.co/settings/tokens
+HF_API_KEY=your_hf_token_here
+
+# Optional: Custom Hugging Face text model for story generation
+# Default: mistralai/Mistral-7B-Instruct-v0.2
+HUGGINGFACE_TEXT_MODEL=mistralai/Mistral-7B-Instruct-v0.2
+
+# Optional: Custom Hugging Face image model
+# Default: runwayml/stable-diffusion-v1-5
+HUGGINGFACE_MODEL=runwayml/stable-diffusion-v1-5
+```
+
+### 2. Everything is FREE! 🎉
+
+**Both story AND image generation now use Hugging Face Inference API - FREE forever!**
+- ✅ No quota limits
+- ✅ No payment required
+- ✅ Works without API token (though token increases rate limits)
+- ✅ No OpenAI account needed
+- ✅ Uses free Stable Diffusion models for images
+- ✅ Uses free Mistral/LLM models for stories
+
+**Note:** You can use the app immediately without any API keys! Adding a free Hugging Face token just improves rate limits.
 
 ## How can I edit this code?
 

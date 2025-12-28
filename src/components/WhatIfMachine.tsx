@@ -1,23 +1,47 @@
 import React, { useState, useRef } from 'react';
+import { generateStory } from "../lib/api";
+
+type Story = {
+  title: string;
+  morning: string;
+  midday: string;
+  afternoon: string;
+  evening: string;
+  reflection: string;
+};
 
 export default function WhatIfMachine() {
   const [whatIf, setWhatIf] = useState('');
   const [currentLife, setCurrentLife] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [story, setStory] = useState<any>(null);
+  const [story, setStory] = useState<Story | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(false);
   const [flipped, setFlipped] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [savedStories, setSavedStories] = useState<Array<{whatIf: string, story: Story, timestamp: number}>>([]);
+  const [showSaved, setShowSaved] = useState(false);
+
   const storyRef = useRef<HTMLDivElement>(null);
 
-  const generateStory = async () => {
+  // Load saved stories on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('whatif-stories');
+    if (saved) {
+      setSavedStories(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleGenerate = async () => {
     setError('');
     setStory(null);
+    setImageUrl(null);
     setVisible(false);
+    setCurrentPage(0);
 
     if (!whatIf.trim()) {
-      setError("Could you add a short 'What if…' prompt?");
+      setError('Add a "What if…" prompt to begin.');
       return;
     }
 
@@ -25,35 +49,22 @@ export default function WhatIfMachine() {
     setIsGenerating(true);
 
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ whatIf: whatIf.trim(), currentLife: currentLife.trim() }),
+      const result = await generateStory({
+        whatIf: whatIf.trim(),
+        currentLife: currentLife.trim(),
       });
 
-      const data = await res.json();
+      setStory(result.story);
+      setImageUrl(result.imageUrl || null);
 
-      if (!res.ok) {
-        setError(data?.error || "Hmm — I couldn't open that page just now. Try again in a moment.");
-        setTimeout(() => setFlipped(false), 600);
-        return;
-      }
-
-      if (!data?.story) {
-        setError("Hmm — the story didn't come through clearly. Try a slightly different prompt.");
-        setTimeout(() => setFlipped(false), 600);
-        return;
-      }
-
-      setStory(data.story);
-      setTimeout(() => setVisible(true), 120);
+      setTimeout(() => setVisible(true), 150);
       setTimeout(() => {
-        if (storyRef.current) storyRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        storyRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 300);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("I'm having trouble right now. Please try again shortly.");
-      setTimeout(() => setFlipped(false), 600);
+      setError(err.message || 'Something went wrong. Try again.');
+      setFlipped(false);
     } finally {
       setIsGenerating(false);
     }
@@ -63,48 +74,240 @@ export default function WhatIfMachine() {
     setWhatIf('');
     setCurrentLife('');
     setStory(null);
+    setImageUrl(null);
     setError('');
     setVisible(false);
     setFlipped(false);
+    setCurrentPage(0);
+    setShowSaved(false);
   };
 
-  // Generate spiral holes for the full height
+  const saveStory = () => {
+    if (!story || !whatIf) return;
+    
+    const newStory = {
+      whatIf: whatIf.trim(),
+      story,
+      timestamp: Date.now()
+    };
+    
+    const updated = [newStory, ...savedStories].slice(0, 10); // Keep last 10
+    setSavedStories(updated);
+    localStorage.setItem('whatif-stories', JSON.stringify(updated));
+    alert('Story saved! ✨');
+  };
+
+  const loadStory = (savedItem: {whatIf: string, story: Story, timestamp: number}) => {
+    setWhatIf(savedItem.whatIf);
+    setStory(savedItem.story);
+    setFlipped(true);
+    setCurrentPage(0);
+    setShowSaved(false);
+    setTimeout(() => setVisible(true), 150);
+  };
+
+  const shareStory = () => {
+    if (!story) return;
+    
+    const shareUrl = window.location.href;
+    
+    // Just copy URL to clipboard
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert('Story link copied to clipboard! 📋');
+    }).catch(() => {
+      alert('Could not copy link');
+    });
+  };
+
+  const downloadPDF = () => {
+    if (!story) return;
+
+    // Create PDF content
+    const content = `
+What If Machine - ${story.title}
+Generated on ${new Date().toLocaleDateString()}
+
+What if: ${whatIf}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MORNING
+${story.morning}
+
+MIDDAY
+${story.midday}
+
+AFTERNOON
+${story.afternoon}
+
+EVENING
+${story.evening}
+
+REFLECTION
+${story.reflection}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Generated by What If Machine
+Another version of your life, now read.
+    `.trim();
+
+    // Create blob and download
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `what-if-${story.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exploreAnother = () => {
+    reset();
+  };
+
+  const nextPage = () => {
+    if (story && currentPage < 5) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goBack = () => {
+    setFlipped(false);
+    setCurrentPage(0);
+  };
+
   const holes = Array.from({ length: 12 });
+
+  // Get current page content
+  const getCurrentPageContent = () => {
+    if (!story) return null;
+
+    switch (currentPage) {
+      case 0:
+        return (
+          <>
+            <h2 className="story-title">{story.title}</h2>
+            <h3 style={{ marginTop: '2rem', fontWeight: 600, color: '#6b5d4f' }}>Morning</h3>
+            <p>{story.morning}</p>
+          </>
+        );
+      case 1:
+        return (
+          <>
+            <h3 style={{ fontWeight: 600, color: '#6b5d4f' }}>Midday</h3>
+            <p>{story.midday}</p>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <h3 style={{ fontWeight: 600, color: '#6b5d4f' }}>Afternoon</h3>
+            <p>{story.afternoon}</p>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <h3 style={{ fontWeight: 600, color: '#6b5d4f' }}>Evening</h3>
+            <p>{story.evening}</p>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            <h3 style={{ fontWeight: 600, color: '#6b5d4f' }}>Reflection</h3>
+            <p className="reflection">{story.reflection}</p>
+          </>
+        );
+      case 5:
+        return (
+          <>
+            <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
+              <p style={{ fontSize: '1.5rem', color: '#6b5d4f', fontStyle: 'italic' }}>
+                The End
+              </p>
+              <p style={{ marginTop: '2rem', color: '#8b7d6f', lineHeight: '1.8' }}>
+                Every choice opens a door to a different life.<br />
+                This was just one of infinite paths you could walk.<br />
+                What will you choose next?
+              </p>
+            </div>
+
+            {/* Action buttons on the end page */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              justifyContent: 'center', 
+              marginTop: '3rem',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                className="whatif-btn primary"
+                onClick={exploreAnother}
+                style={{ minWidth: '160px' }}
+              >
+                ✨ Explore Another Story
+              </button>
+              <button
+                className="whatif-btn primary"
+                onClick={downloadPDF}
+                style={{ minWidth: '160px' }}
+              >
+                📥 Download Story
+              </button>
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="whatif-page">
       <main className="whatif-container">
-        <h1 className="whatif-title">What If… <span className="title-emoji" aria-hidden="true">✨</span></h1>
-        <p className="whatif-subtitle">Another version of your life, waiting to be read - plausible futures, softly lit.</p>
+        <h1 className="whatif-title">
+          What If… <span className="title-emoji">✨</span>
+        </h1>
 
-        {/* Book wrapper with spiral binding */}
+        <p className="whatif-subtitle">
+          Another version of your life, waiting to be read.
+        </p>
+
         <div className="book-wrapper">
-          {/* Spiral binding - full height with actual coils */}
+          {/* Spiral */}
           <div className="spiral-binding" aria-hidden="true">
             {holes.map((_, i) => (
               <div key={i} className="spiral-ring">
                 <div className="ring-hole" />
                 <svg className="ring-coil" viewBox="0 0 20 20" fill="none">
-                  <path 
-                    d="M18 8C18 4 14 1 10 1C6 1 2 4 2 8C2 12 6 15 10 15" 
-                    stroke="#a89b8c" 
-                    strokeWidth="1.5" 
+                  <path
+                    d="M18 8C18 4 14 1 10 1C6 1 2 4 2 8C2 12 6 15 10 15"
+                    stroke="#a89b8c"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
-                    fill="none"
                   />
                 </svg>
               </div>
             ))}
           </div>
 
-          {/* Page card with flip animation */}
-          <div ref={containerRef} className={`page-card ${flipped ? 'flipped' : ''}`}>
-            {/* Front face */}
+          {/* Page */}
+          <div className={`page-card ${flipped ? 'flipped' : ''}`}>
+            {/* FRONT */}
             <div className="page-face page-front">
               <div className="input-group">
                 <label className="input-label">What if… *</label>
                 <input
-                  type="text"
                   value={whatIf}
                   onChange={(e) => setWhatIf(e.target.value)}
                   placeholder="What if I'd studied art instead?"
@@ -113,12 +316,12 @@ export default function WhatIfMachine() {
               </div>
 
               <div className="input-group">
-                <label className="soft-label">If you want, tell me a little about your current life</label>
+                <label className="soft-label">
+                  If you want, tell me about your current life
+                </label>
                 <textarea
                   value={currentLife}
                   onChange={(e) => setCurrentLife(e.target.value)}
-                  placeholder="I'm currently working in tech, living in the city, always wondered about other paths..."
-                  rows={4}
                   className="whatif-textarea"
                 />
               </div>
@@ -126,60 +329,176 @@ export default function WhatIfMachine() {
               {error && <div className="soft-error">{error}</div>}
 
               <div className="button-group">
-                <button className="whatif-btn primary" onClick={generateStory} disabled={isGenerating}>
-                  {isGenerating ? 'Opening page…' : 'Open this page'}
+                <button
+                  className="whatif-btn primary"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Opening…' : 'Open this page'}
                 </button>
-                <button className="whatif-btn secondary" onClick={reset} disabled={isGenerating}>
+
+                <button
+                  className="whatif-btn secondary"
+                  onClick={() => setShowSaved(!showSaved)}
+                >
+                  {showSaved ? 'Hide Saved' : `Saved (${savedStories.length})`}
+                </button>
+
+                <button
+                  className="whatif-btn secondary"
+                  onClick={reset}
+                  disabled={isGenerating}
+                >
                   Clear
                 </button>
               </div>
+
+              {/* Saved Stories List */}
+              {showSaved && savedStories.length > 0 && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  maxHeight: '200px', 
+                  overflowY: 'auto',
+                  border: '1px solid #d4c5b0',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  backgroundColor: '#faf9f7'
+                }}>
+                  {savedStories.map((item, idx) => (
+                    <div 
+                      key={idx}
+                      onClick={() => loadStory(item)}
+                      style={{
+                        padding: '0.75rem',
+                        marginBottom: '0.5rem',
+                        backgroundColor: 'white',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        border: '1px solid #e6dfd5',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f1ed'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                    >
+                      <div style={{ fontSize: '0.875rem', color: '#6b5d4f', fontWeight: 500 }}>
+                        {item.whatIf}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#8b7d6f', marginTop: '0.25rem' }}>
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Back face */}
+            {/* BACK */}
             <div className="page-face page-back">
               {isGenerating && (
                 <div className="loading-state">
                   <div className="spinner" />
-                  <span>Turning the page…</span>
+                  Generating your plausible futures…
                 </div>
               )}
 
               {!isGenerating && story && (
-                <div ref={storyRef} className={`story-content ${visible ? 'fade-in' : ''}`}>
-                  <article>
-                    <h2 className="story-title">{story.title}</h2>
-                    <p>{story.morning}</p>
-                    <p>{story.midday}</p>
-                    <p>{story.afternoon}</p>
-                    <p>{story.evening}</p>
-
-                    <h3 className="key-moments">Key moments</h3>
-                    <ul>
-                      {Array.isArray(story.keyMoments) && story.keyMoments.map((m: string, i: number) => <li key={i}>{m}</li>)}
-                    </ul>
-
-                    <p className="reflection">{story.reflection}</p>
-
-                    <div className="button-group">
-                      <button className="whatif-btn primary" onClick={() => { setFlipped(false); setVisible(false); }}>
-                        Back to prompts
-                      </button>
-                      <button className="whatif-btn secondary" onClick={reset}>
-                        Try another
-                      </button>
-                    </div>
+                <div ref={storyRef} className={`story-content ${visible ? 'fade-in' : ''}`} style={{ 
+                  height: '100%', 
+                  overflowY: 'auto',
+                  paddingTop: '1rem',
+                  paddingRight: '1rem'
+                }}>
+                  <article style={{ minHeight: '60vh' }}>
+                    {getCurrentPageContent()}
                   </article>
+
+                  {/* Navigation Buttons - After content */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '4rem',
+                    paddingTop: '2rem',
+                    paddingBottom: '2rem',
+                    borderTop: '1px solid #e0d9d0'
+                  }}>
+                    {/* Previous/Back button - always on the left */}
+                    {currentPage > 0 ? (
+                      <button
+                        className="whatif-btn primary"
+                        onClick={prevPage}
+                        style={{ minWidth: '100px' }}
+                      >
+                        ← Previous
+                      </button>
+                    ) : (
+                      <button
+                        className="whatif-btn primary"
+                        onClick={goBack}
+                        style={{ minWidth: '100px' }}
+                      >
+                        ← Back
+                      </button>
+                    )}
+
+                    {/* Action buttons in the middle - only show on non-end pages */}
+                    {currentPage < 5 && (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="whatif-btn secondary"
+                          onClick={saveStory}
+                          title="Save this story"
+                        >
+                          💾 Save
+                        </button>
+                        <button
+                          className="whatif-btn secondary"
+                          onClick={shareStory}
+                          title="Copy story link"
+                        >
+                          📤 Share
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Next button - on the right */}
+                    {currentPage < 5 && (
+                      <button
+                        className="whatif-btn primary"
+                        onClick={nextPage}
+                        style={{ minWidth: '100px' }}
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Page Counter */}
+                  <div style={{ 
+                    position: 'absolute', 
+                    bottom: '1rem', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    fontSize: '0.875rem',
+                    color: '#8b7d6f'
+                  }}>
+                    Page {currentPage + 1} of 6
+                  </div>
                 </div>
               )}
 
               {!isGenerating && !story && (
-                <div className="empty-state">No story yet — try opening a page.</div>
+                <div className="empty-state">
+                  No story yet — try opening a page.
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <footer className="whatif-footer">Turn the page — read a day you almost lived.</footer>
+        <footer className="whatif-footer">
+          Turn the page — read a day you almost lived.
+        </footer>
       </main>
     </div>
   );
