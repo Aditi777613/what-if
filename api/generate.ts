@@ -1,46 +1,61 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import Groq from "groq-sdk";
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+  const { whatIf, currentLife } = req.body
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (!whatIf) {
+    return res.status(400).json({ error: 'whatIf is required' })
   }
 
   try {
-    const { whatIf, currentLife } = req.body;
+    const response = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'Write a calm, reflective alternate-life story. Soft, emotional, realistic.'
+            },
+            {
+              role: 'user',
+              content: `What if: ${whatIf}\nCurrent life: ${currentLife || 'Not provided'}`
+            }
+          ],
+          temperature: 0.8
+        })
+      }
+    )
 
-    if (!whatIf) {
-      return res.status(400).json({ error: "Missing prompt" });
+    const data = await response.json()
+    const text = data?.choices?.[0]?.message?.content
+
+    if (!text) {
+      throw new Error('Invalid response from Groq')
     }
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.1-70b-versatile",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a reflective storyteller generating calm, realistic alternate-life narratives.",
-        },
-        {
-          role: "user",
-          content: `What if: ${whatIf}\nCurrent life: ${currentLife || "Not provided"}`,
-        },
-      ],
-      temperature: 0.7,
-    });
-
-    const story = completion.choices[0]?.message?.content;
-
-    res.status(200).json({ story });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ error: "Generation failed" });
+    return res.status(200).json({
+      story: {
+        title: 'What If…',
+        morning: text,
+        midday: '',
+        afternoon: '',
+        evening: '',
+        reflection: ''
+      },
+      imageUrl: null
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ error: 'Generation failed' })
   }
 }
