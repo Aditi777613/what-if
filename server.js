@@ -8,7 +8,7 @@ const app = express();
 
 const fetch = globalThis.fetch || nodeFetch;
 
-/* ✅ CORS — FIXED (NO TRAILING SLASH, ALL ORIGINS INCLUDED) */
+/* ✅ CORS — FINAL & CORRECT */
 app.use(cors({
   origin: [
     "https://what-if-ecru.vercel.app",
@@ -16,13 +16,11 @@ app.use(cors({
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type"]
 }));
 
-/* ✅ HARD PRE-FLIGHT HANDLING (RENDER SAFE) */
-app.options("*", (req, res) => {
-  res.sendStatus(204);
-});
+/* ✅ Render-safe preflight */
+app.options("*", (req, res) => res.sendStatus(204));
 
 app.use(express.json());
 
@@ -34,15 +32,29 @@ app.post("/api/generate", async (req, res) => {
   }
 
   try {
-    const storyPrompt = `Write a beautiful, realistic day-in-the-life story.
+    const prompt = `
+Write a calm, realistic alternate-life story.
+
+Rules (IMPORTANT):
+- Do NOT use markdown (**)
+- Do NOT repeat section titles inside content
+- Use EXACT section labels on new lines only:
+
+TITLE:
+MORNING:
+MIDDAY:
+AFTERNOON:
+EVENING:
+REFLECTION:
+
+Each section must contain 2 short paragraphs.
+No extra text before or after sections.
 
 Scenario: ${whatIf}
-Current situation: ${currentLife || "Not specified"}
+Current life: ${currentLife || "Not specified"}
+`;
 
-Write with these sections:
-Title, Morning, Midday, Afternoon, Evening, Reflection.`;
-
-    const storyResponse = await fetch(
+    const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
@@ -52,19 +64,19 @@ Title, Morning, Midday, Afternoon, Evening, Reflection.`;
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: storyPrompt }],
-          temperature: 0.8,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
           max_tokens: 2000,
         }),
       }
     );
 
-    if (!storyResponse.ok) {
-      const err = await storyResponse.text();
+    if (!response.ok) {
+      const err = await response.text();
       throw new Error(err);
     }
 
-    const data = await storyResponse.json();
+    const data = await response.json();
     const text = data.choices[0].message.content;
 
     const story = parseStory(text, whatIf);
@@ -75,65 +87,54 @@ Title, Morning, Midday, Afternoon, Evening, Reflection.`;
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ Generation error:", err);
     res.status(500).json({ error: "Generation failed" });
   }
 });
 
-/* ✅ ROBUST STORY PARSER (THIS FIXES EMPTY OUTPUT) */
+/* 🔒 BULLETPROOF PARSER */
 function parseStory(text, whatIf) {
-  const sections = {
-    title: whatIf,
-    morning: "",
-    midday: "",
-    afternoon: "",
-    evening: "",
-    reflection: "",
+  const clean = (s = "") =>
+    s
+      .replace(/^(TITLE|MORNING|MIDDAY|AFTERNOON|EVENING|REFLECTION):?/gi, "")
+      .trim();
+
+  const get = (label) => {
+    const regex = new RegExp(
+      `${label}:([\\s\\S]*?)(?=\\n[A-Z ]+:|$)`,
+      "i"
+    );
+    const match = text.match(regex);
+    return match ? clean(match[1]) : "";
   };
 
-  // Try markdown-style sections first
-  const patterns = {
-    morning: /\*\*Morning:\*\*([\s\S]*?)(?=\*\*Midday|\Z)/i,
-    midday: /\*\*Midday:\*\*([\s\S]*?)(?=\*\*Afternoon|\Z)/i,
-    afternoon: /\*\*Afternoon:\*\*([\s\S]*?)(?=\*\*Evening|\Z)/i,
-    evening: /\*\*Evening:\*\*([\s\S]*?)(?=\*\*Reflection|\Z)/i,
-    reflection: /\*\*Reflection:\*\*([\s\S]*)/i,
+  const story = {
+    title: get("TITLE") || whatIf,
+    morning: get("MORNING"),
+    midday: get("MIDDAY"),
+    afternoon: get("AFTERNOON"),
+    evening: get("EVENING"),
+    reflection: get("REFLECTION"),
   };
 
-  let matched = false;
+  /* ✅ HARD FALLBACK — NEVER EMPTY */
+  const allText = text
+    .split(/\n+/)
+    .map(t => t.trim())
+    .filter(t => t.length > 40);
 
-  for (const key in patterns) {
-    const match = text.match(patterns[key]);
-    if (match) {
-      sections[key] = match[1].trim();
-      matched = true;
-    }
+  if (!story.morning && allText.length) {
+    const chunk = Math.ceil(allText.length / 5);
+    story.morning = allText.slice(0, chunk).join("\n\n");
+    story.midday = allText.slice(chunk, chunk * 2).join("\n\n");
+    story.afternoon = allText.slice(chunk * 2, chunk * 3).join("\n\n");
+    story.evening = allText.slice(chunk * 3, chunk * 4).join("\n\n");
+    story.reflection =
+      allText.slice(chunk * 4).join("\n\n") ||
+      "Every imagined life teaches us something about the one we live.";
   }
 
-  /* 🔥 FALLBACK — paragraph-based (MOST IMPORTANT FIX) */
-  if (!matched) {
-    const paragraphs = text
-      .split(/\n\n+/)
-      .map(p => p.trim())
-      .filter(p => p.length > 40);
-
-    if (paragraphs.length >= 5) {
-      const chunk = Math.ceil(paragraphs.length / 5);
-      sections.morning = paragraphs.slice(0, chunk).join("\n\n");
-      sections.midday = paragraphs.slice(chunk, chunk * 2).join("\n\n");
-      sections.afternoon = paragraphs.slice(chunk * 2, chunk * 3).join("\n\n");
-      sections.evening = paragraphs.slice(chunk * 3, chunk * 4).join("\n\n");
-      sections.reflection = paragraphs.slice(chunk * 4).join("\n\n");
-    } else {
-      sections.morning = paragraphs[0] || text;
-      sections.midday = paragraphs[1] || "";
-      sections.afternoon = paragraphs[2] || "";
-      sections.evening = paragraphs[3] || "";
-      sections.reflection = paragraphs[4] || "Every path leaves a trace.";
-    }
-  }
-
-  return sections;
+  return story;
 }
 
 const PORT = process.env.PORT || 5174;
