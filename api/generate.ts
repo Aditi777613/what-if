@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -23,8 +23,23 @@ export default async function handler(req: any, res: any) {
           messages: [
             {
               role: 'system',
-              content:
-                'Write a calm, reflective alternate-life story. Soft, emotional, realistic.'
+              content: `
+You are a reflective storyteller.
+
+Write ONE alternate-life story divided STRICTLY into these sections:
+
+MORNING:
+MIDDAY:
+AFTERNOON:
+EVENING:
+REFLECTION:
+
+Rules:
+- Each section must be 3–5 sentences
+- Emotional, calm, realistic
+- Do NOT add extra headings
+- Use ONLY the labels above
+`
             },
             {
               role: 'user',
@@ -43,19 +58,31 @@ export default async function handler(req: any, res: any) {
       throw new Error('Invalid response from Groq')
     }
 
+    // ---- SAFE SECTION PARSER ----
+    const extract = (label: string) => {
+      const regex = new RegExp(
+        `${label}:([\\s\\S]*?)(?=MORNING:|MIDDAY:|AFTERNOON:|EVENING:|REFLECTION:|$)`,
+        'i'
+      )
+      return text.match(regex)?.[1]?.trim() || ''
+    }
+
     return res.status(200).json({
       story: {
         title: 'What If…',
-        morning: text,
-        midday: '',
-        afternoon: '',
-        evening: '',
-        reflection: ''
+        morning: extract('MORNING'),
+        midday: extract('MIDDAY'),
+        afternoon: extract('AFTERNOON'),
+        evening: extract('EVENING'),
+        reflection: extract('REFLECTION')
       },
       imageUrl: null
     })
-  } catch (err) {
-    console.error(err)
-    return res.status(500).json({ error: 'Generation failed' })
+  } catch (err: any) {
+    console.error('❌ Generation failed:', err)
+    return res.status(500).json({
+      error: 'Generation failed',
+      details: err?.message || 'Unknown error'
+    })
   }
 }
