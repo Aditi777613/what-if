@@ -8,18 +8,21 @@ const app = express();
 
 const fetch = globalThis.fetch || nodeFetch;
 
-/* ✅ CORS — FIXED */
+/* ✅ CORS — FIXED (NO TRAILING SLASH, ALL ORIGINS INCLUDED) */
 app.use(cors({
   origin: [
-    "https://what-if-ecru.vercel.app/",
+    "https://what-if-ecru.vercel.app",
+    "https://what-if-git-main-aditi-chourasias-projects.vercel.app",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
 
-/* ✅ Explicit preflight handling */
-app.options("*", cors());
+/* ✅ HARD PRE-FLIGHT HANDLING (RENDER SAFE) */
+app.options("*", (req, res) => {
+  res.sendStatus(204);
+});
 
 app.use(express.json());
 
