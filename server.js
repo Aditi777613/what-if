@@ -38,9 +38,6 @@ Current situation: ${currentLife || "Not specified"}
 STRICT RULES:
 - Total length MUST be at least 600 words
 - Each section MUST be at least 150 words
-- The title MUST be metaphorical and original. 
-- The title MUST be poetic and original and MUST NOT include, paraphrase, or reference any word from the scenario text in any form.
-- The title MUST NOT repeat or closely resemble the scenario text
 - Do NOT summarize
 - Do NOT use markdown symbols
 - Do NOT repeat headings inside content
@@ -48,24 +45,24 @@ STRICT RULES:
 
 OUTPUT FORMAT (EXACT ORDER):
 
-Title:
-(3–6 word poetic, metaphorical title — NOT literal)
+**Title:** [A poetic 3-6 word title]
 
-Morning:
-(Describe waking up, surroundings, emotions, actions)
+**Morning:**
+[2 detailed paragraphs about the morning in this alternate life]
 
-Midday:
-(Describe work/study, interactions, environment)
+**Midday:**
+[2 detailed paragraphs about midday activities]
 
-Afternoon:
-(Describe momentum of the day, challenges, thoughts)
+**Afternoon:**
+[2 detailed paragraphs about afternoon experiences]
 
-Evening:
-(Describe slowing down, atmosphere, feelings)
+**Evening:**
+[2 detailed paragraphs about evening wind-down]
 
-Reflection:
-(Thoughtful reflection on this life path and its meaning)
-`;
+**Reflection:**
+[2 thoughtful paragraphs reflecting on this life path]
+
+Make it feel real, emotional, and grounded in specific details.`;
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
