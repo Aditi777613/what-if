@@ -23,33 +23,36 @@ export default async function handler(req: any, res: any) {
           temperature: 0.7,
           messages: [
             {
-              role: 'system',
-              content: `
-You MUST output FIVE SEPARATE PARAGRAPHS.
-Each paragraph represents a different time of day.
+  role: 'system',
+  content: `
+Write a calm, reflective alternate-life story.
 
-DO NOT merge them.
-DO NOT add explanations.
-DO NOT add markdown.
+STRICT RULES:
+- Write FIVE sections: Morning, Midday, Afternoon, Evening, Reflection
+- EACH section must be at least 120–150 words
+- Do NOT merge sections
+- Do NOT summarize
+- Write slow, descriptive, emotional prose
+- No markdown, no bullet points
 
-Output EXACTLY in this format:
+FORMAT EXACTLY LIKE THIS:
 
 MORNING:
-<paragraph>
+<150+ words>
 
 MIDDAY:
-<paragraph>
+<150+ words>
 
 AFTERNOON:
-<paragraph>
+<150+ words>
 
 EVENING:
-<paragraph>
+<150+ words>
 
 REFLECTION:
-<paragraph>
+<120+ words>
 `
-            },
+},
             {
               role: 'user',
               content: `What if: ${whatIf}\nCurrent life: ${currentLife || 'Not provided'}`
